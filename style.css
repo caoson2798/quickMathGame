@@ -176,7 +176,8 @@ button {
     height: 100%;
     width: 100%;
     background-color: #e74c3c; 
-    transition: width linear;
+    /* Thay đổi dòng này: để JS tự điều khiển thời gian chạy */
+    transition: width linear; 
 }
 
 /* --- MODAL (Responsive & Blur Effect) --- */

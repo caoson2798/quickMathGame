@@ -3,6 +3,8 @@ let currentScore = 0;
 let currentLevelTime = 2000;
 let currentPointsReward = 10;
 let currentAnswerTime = 20000;
+let timeRemaining = 0; // Lưu thời gian còn lại (Fix Bug)
+let barStartTime = 0;  // Mốc bắt đầu chạy thanh bar
 let numberSequence = [];
 let currentIndex = 0;
 let isPlaying = false; 
@@ -16,20 +18,15 @@ const numberDisplay = document.getElementById('number-display');
 const answerSection = document.getElementById('answer-section');
 const gameMessage = document.getElementById('game-message');
 const scoreSpan = document.getElementById('score');
-
 const userInput = document.getElementById('user-input');      
 const playerNameInput = document.getElementById('player-name'); 
 const levelSelect = document.getElementById('level-select');
-
 const leaderboardList = document.getElementById('leaderboard-list');
 const timeBarContainer = document.getElementById('time-bar-container');
 const timeBar = document.getElementById('time-bar');
-
-// New Modal DOM elements
-const gameModal = document.getElementById('game-modal');      // <-- MỚI
-const modalTitle = document.getElementById('modal-title');    // <-- MỚI
-const modalScore = document.getElementById('modal-score');    // <-- MỚI
-
+const gameModal = document.getElementById('game-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalScore = document.getElementById('modal-score');
 
 // --- Khởi tạo ---
 window.onload = function() {
@@ -37,7 +34,6 @@ window.onload = function() {
 };
 
 // --- Chức năng chính ---
-
 function startGame() {
     const name = playerNameInput.value.trim();
     if (!name) {
@@ -56,79 +52,57 @@ function startGame() {
 
     screenSetup.classList.add('hidden');
     screenGame.classList.remove('hidden');
-    gameModal.classList.add('hidden'); // Đảm bảo modal ẩn khi bắt đầu
+    gameModal.classList.add('hidden');
 
     startRound();
 }
 
 function quitGame(reason = "Dừng đột ngột") {
-    // 1. Dừng mọi hoạt động
     isPlaying = false;
     if (currentTimer) clearTimeout(currentTimer);
     if (answerTimeout) clearTimeout(answerTimeout); 
     
-    // 2. Lưu điểm
     saveScoreToLeaderboard(currentScore);
 
-    // 3. Xử lý giao diện (DÙNG MODAL)
     if (reason === "Hết giờ" || reason === "Sai đáp án") {
         showGameOverModal(reason);
     } else {
-        // Nếu bấm nút "Dừng & Lưu"
         screenGame.classList.add('hidden');
         screenSetup.classList.remove('hidden');
         renderLeaderboard();
     }
 }
 
-// Hàm mới để hiện modal Game Over (MỚI)
 function showGameOverModal(reason) {
-    // Ẩn các màn hình chơi game
     timeBarContainer.classList.add('hidden');
     screenGame.classList.add('hidden'); 
-    
-    // Cập nhật nội dung modal
-    if (reason === "Hết giờ") {
-        modalTitle.textContent = "HẾT THỜI GIAN!";
-    } else if (reason === "Sai đáp án") {
-        modalTitle.textContent = "SAI ĐÁP ÁN!";
-    }
-    
+    modalTitle.textContent = (reason === "Hết giờ") ? "HẾT THỜI GIAN!" : "SAI ĐÁP ÁN!";
     modalScore.textContent = currentScore;
-
-    // Hiển thị modal
     gameModal.classList.remove('hidden');
 }
-
-// Hàm mới cho nút "Trang chủ" trong modal (MỚI)
-// function closeModalAndGoHome() {
-//     gameModal.classList.add('hidden');
-//     screenSetup.classList.remove('hidden');
-//     renderLeaderboard();
-// }
 
 function startRound() {
     if (!isPlaying) return;
     
     if (answerTimeout) clearTimeout(answerTimeout); 
     timeBarContainer.classList.add('hidden');
-
     answerSection.classList.add('hidden');
     userInput.value = '';
     numberDisplay.innerText = '...';
     gameMessage.innerText = `Cấp độ: ${currentPointsReward} điểm/câu`;
     gameMessage.style.color = '#bdc3c7';
 
-    // Tạo 3 số ngẫu nhiên TỪ 1 ĐẾN 50
+    // THAY ĐỔI TẠI ĐÂY: Phạm vi số từ 1 ĐẾN 30
     numberSequence = [];
     for(let i = 0; i < 3; i++) {
-        numberSequence.push(Math.floor(Math.random() * 50) + 1); 
+        // Công thức tạo số ngẫu nhiên từ 1 đến 30
+        let num = Math.floor(Math.random() * 30) + 1;
+        numberSequence.push(num); 
     }
-    currentIndex = 0;
     
+    currentIndex = 0;
     currentTimer = setTimeout(showNextNumber, 1000);
 }
-
 function showNextNumber() {
     if (!isPlaying) return;
 
@@ -138,50 +112,76 @@ function showNextNumber() {
         answerSection.classList.remove('hidden');
         userInput.focus();
         
+        timeRemaining = currentAnswerTime;
         startAnswerTimer();
         return;
     }
 
-    numberDisplay.innerText = numberSequence[currentIndex];
+    let val = numberSequence[currentIndex];
+    
+    // SỬA TẠI ĐÂY: Chỉ hiện nguyên giá trị (số âm sẽ tự có dấu -, số dương hiện bình thường)
+    numberDisplay.innerText = val; 
+    
     currentIndex++;
-
     currentTimer = setTimeout(showNextNumber, currentLevelTime);
 }
 
+// CẢI TIẾN 2: Fix Bug Thanh Bar chạy tiếp từ vị trí cũ
 function startAnswerTimer() {
+    if (!isPlaying) return;
     timeBarContainer.classList.remove('hidden');
+    barStartTime = Date.now(); // Lưu mốc bắt đầu
     
-    timeBar.style.width = '100%';
-    timeBar.style.transitionDuration = `${currentAnswerTime / 1000}s`;
+    // 1. Tính toán width hiện tại dựa trên thời gian còn lại
+    let currentWidth = (timeRemaining / currentAnswerTime) * 100;
+    
+    // 2. Thiết lập thanh bar không có hiệu ứng để nhảy ngay về vị trí cũ
+    timeBar.style.transition = 'none';
+    timeBar.style.width = currentWidth + '%';
 
+    // 3. Sau một khoảng ngắn, cho nó bắt đầu chạy về 0
     setTimeout(() => {
+        if (!isPlaying) return;
+        timeBar.style.transition = `width ${timeRemaining}ms linear`;
         timeBar.style.width = '0%';
-    }, 10);
+    }, 50);
 
+    // 4. Thiết lập timeout kết thúc game
     answerTimeout = setTimeout(() => {
-        if (isPlaying) {
-            quitGame("Hết giờ");
-        }
-    }, currentAnswerTime);
+        if (isPlaying) quitGame("Hết giờ");
+    }, timeRemaining);
 }
 
 function checkAnswer() {
     if (!isPlaying) return;
 
-    if (answerTimeout) clearTimeout(answerTimeout);
-    timeBarContainer.classList.add('hidden');
+    // Tạm dừng và tính toán thời gian đã mất khi nhấn nút
+    if (answerTimeout) {
+        clearTimeout(answerTimeout);
+        let timeElapsed = Date.now() - barStartTime;
+        timeRemaining -= timeElapsed; // Cập nhật thời gian còn lại
+    }
 
     const playerAnswer = parseInt(userInput.value);
     const correctSum = numberSequence.reduce((a, b) => a + b, 0);
 
+    // Xử lý khi bỏ trống hoặc nhập sai định dạng
     if (isNaN(playerAnswer)) {
         gameMessage.innerText = 'Vui lòng nhập số!';
         gameMessage.style.color = '#e74c3c';
-        answerTimeout = setTimeout(() => startAnswerTimer(), 1000);
+        
+        // Dừng thanh bar 1s cho người dùng đọc rồi chạy tiếp
+        timeBar.style.transition = 'none'; 
+        setTimeout(() => {
+            if (isPlaying && !answerSection.classList.contains('hidden')) {
+                startAnswerTimer(); // Chạy tiếp từ timeRemaining đã lưu
+            }
+        }, 1000);
         return;
     }
 
     if (playerAnswer === correctSum) {
+        timeBarContainer.classList.add('hidden');
         currentScore += currentPointsReward;
         scoreSpan.innerText = currentScore;
         
@@ -190,49 +190,36 @@ function checkAnswer() {
         
         currentTimer = setTimeout(startRound, 1500);
     } else {
-        quitGame("Sai đáp án"); // Gọi quitGame, logic hiện modal sẽ được kích hoạt
+        quitGame("Sai đáp án");
     }
 }
 
-// --- Xử lý Bảng Xếp Hạng (Giữ nguyên) ---
-
+// --- Xử lý Bảng Xếp Hạng ---
 function saveScoreToLeaderboard(score) {
     if (score === 0) return;
-
-    const name = playerNameInput.value || "Ẩn danh";
-    const levelName = levelSelect.options[levelSelect.selectedIndex].text;
-    
+    const name = playerNameInput.value.trim() || "Ẩn danh";
     let scores = JSON.parse(localStorage.getItem('quickMathScoresV2')) || [];
-
     scores.push({ 
         name: name, 
         score: score, 
-        level: levelName,
         date: new Date().toLocaleTimeString() 
     });
-
     scores.sort((a, b) => b.score - a.score);
     scores = scores.slice(0, 5);
-
     localStorage.setItem('quickMathScoresV2', JSON.stringify(scores));
 }
 
 function renderLeaderboard() {
     const scores = JSON.parse(localStorage.getItem('quickMathScoresV2')) || [];
     leaderboardList.innerHTML = '';
-
     if (scores.length === 0) {
         leaderboardList.innerHTML = '<li>Chưa có dữ liệu</li>';
         return;
     }
-
     scores.forEach((item, index) => {
         const li = document.createElement('li');
-        // CẬP NHẬT: Loại bỏ thẻ <small> chứa cấp độ (item.level)
         li.innerHTML = `
-            <span>
-                #${index + 1} <strong>${item.name}</strong> 
-                </span>
+            <span>#${index + 1} <strong>${item.name}</strong></span>
             <span class="rank-score">${item.score}</span>
         `;
         leaderboardList.appendChild(li);
@@ -246,7 +233,7 @@ function clearData() {
     }
 }
 
-// Cho phép nhấn Enter để trả lời
+// Enter để trả lời
 userInput.addEventListener("keypress", function(event) {
   if (event.key === "Enter" && !answerSection.classList.contains('hidden')) {
     checkAnswer();
