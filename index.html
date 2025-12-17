@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thử Thách Tính Nhanh - V3</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>⚡ Siêu Tính Nhẩm ⚡</h1>
+        
+        <div id="screen-setup">
+            <div class="input-group">
+                <label>Tên người chơi:</label>
+                <input type="text" id="player-name" placeholder="Nhập tên của bạn..." value="Người chơi 1">
+            </div>
+
+            <div class="input-group">
+                <label>Chọn độ khó:</label>
+                <select id="level-select">
+                    <option value="2000" data-points="10" data-answer-time="20000">Dễ (2s/số - 20s trả lời)</option>
+                    <option value="1000" data-points="20" data-answer-time="10000">Trung Bình (1s/số - 10s trả lời)</option>
+                    <option value="500" data-points="30" data-answer-time="5000">Khó (0.5s/số - 5s trả lời)</option>
+                </select>
+            </div>
+
+            <button onclick="startGame()" class="btn-start">Bắt Đầu Game</button>
+
+            <div class="leaderboard-section">
+                <h3>🏆 Bảng Xếp Hạng Top 5</h3>
+                <ul id="leaderboard-list">
+                    <li>Chưa có dữ liệu</li>
+                </ul>
+                <button onclick="clearData()" class="btn-small">Xóa dữ liệu</button>
+            </div>
+        </div>
+
+        <div id="screen-game" class="hidden">
+            <div class="header-game">
+                <button onclick="quitGame('Dừng đột ngột')" class="btn-quit">❌ Dừng & Lưu</button>
+                <div class="score-board">Điểm: <span id="score">0</span></div>
+            </div>
+            
+            <div class="message" id="game-message">Chuẩn bị...</div>
+            
+            <div id="time-bar-container" class="hidden">
+                <div id="time-bar"></div>
+            </div>
+
+            <div id="number-display">?</div>
+
+            <div id="answer-section" class="hidden">
+                <input type="number" id="user-input" placeholder="Tổng là bao nhiêu?">
+                <button onclick="checkAnswer()" class="btn-submit">Trả lời</button>
+            </div>
+        </div>
+
+        <div id="game-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 id="modal-title">GAME OVER!</h2>
+                <p>Điểm đạt được:</p>
+                <p class="final-score-text"><span id="modal-score">0</span></p>
+                
+                <button onclick="window.location.reload()" class="btn-start">Chơi Lại</button>
+            </div>
+        </div>
+
+    </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
