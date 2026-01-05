@@ -1,0 +1,8 @@
+{
+  "name": "Siêu tính nhẩm",
+  "short_name": "App",
+  "start_url": "/quickMathGame",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff"
+}
